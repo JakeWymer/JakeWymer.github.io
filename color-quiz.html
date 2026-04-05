@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>What's Your True Color?</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #FAF8F4;
+    --surface: #FFFFFF;
+    --text: #1A1714;
+    --muted: #7A7570;
+    --border: rgba(26,23,20,0.12);
+    --accent: #D4860A;
+    --radius: 16px;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 10% 20%, rgba(212,134,10,0.07) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 50% at 90% 80%, rgba(193,96,59,0.06) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .card {
+    position: relative;
+    z-index: 1;
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 3rem 2.5rem;
+    width: 100%;
+    max-width: 560px;
+    box-shadow: 0 4px 40px rgba(0,0,0,0.07), 0 1px 4px rgba(0,0,0,0.04);
+  }
+
+  .brand {
+    font-family: 'Playfair Display', serif;
+    font-size: 13px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 2.5rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .brand::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .progress-track {
+    height: 2px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-bottom: 2rem;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .step-label {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 1rem;
+    letter-spacing: 0.05em;
+  }
+
+  .question {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    line-height: 1.4;
+    color: var(--text);
+    margin-bottom: 1.75rem;
+  }
+
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .option-btn {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 14px 18px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: transparent;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.18s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .option-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--accent);
+    opacity: 0;
+    transition: opacity 0.18s;
+  }
+
+  .option-btn:hover {
+    border-color: var(--accent);
+    transform: translateX(3px);
+  }
+
+  .option-btn:hover::before { opacity: 0.05; }
+  .option-btn:active { transform: scale(0.99); }
+
+  .option-btn span { position: relative; z-index: 1; }
+
+  /* Result screen */
+  .result-screen { text-align: center; }
+
+  .color-swatch {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    margin: 0 auto 1.5rem;
+    transition: background 0.6s ease;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    animation: swatchIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  @keyframes swatchIn {
+    from { transform: scale(0.4); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .result-eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .result-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+  }
+
+  .result-hex {
+    font-size: 13px;
+    color: var(--muted);
+    font-family: monospace;
+    margin-bottom: 1.75rem;
+  }
+
+  .result-divider {
+    width: 40px;
+    height: 2px;
+    background: var(--accent);
+    margin: 0 auto 1.75rem;
+  }
+
+  .result-traits {
+    text-align: left;
+    margin-bottom: 2rem;
+  }
+
+  .trait {
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+    animation: traitIn 0.4s ease both;
+  }
+
+  .trait:last-child { border-bottom: none; }
+
+  @keyframes traitIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .trait-title {
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .trait-desc {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .result-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .btn-outline {
+    padding: 11px 22px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-outline:hover { border-color: var(--text); }
+
+  .btn-filled {
+    padding: 11px 22px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--bg);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-filled:hover { opacity: 0.85; }
+
+  /* Intro screen */
+  .intro-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 34px;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+  }
+
+  .intro-title em { color: var(--accent); font-style: italic; }
+
+  .intro-desc {
+    font-size: 15px;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 2rem;
+  }
+
+  .start-btn {
+    display: inline-block;
+    padding: 14px 32px;
+    border-radius: 8px;
+    background: var(--text);
+    color: var(--bg);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .start-btn:hover { opacity: 0.8; }
+
+  .fade-in { animation: fadeIn 0.35s ease both; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 500px) {
+    .card { padding: 2rem 1.5rem; }
+    .intro-title { font-size: 26px; }
+  }
+</style>
+</head>
+<body>
+<div class="card" id="card">
+  <div id="screen"></div>
+</div>
+
+<script>
+const questions = [
+  {
+    question: "What's your ideal Saturday afternoon?",
+    options: [
+      { label: "Hiking or being outside", colors: ["forest", "olive", "terracotta"] },
+      { label: "Cozy at home with a book", colors: ["navy", "burgundy", "slate"] },
+      { label: "Out exploring the city", colors: ["cobalt", "amber", "charcoal"] },
+      { label: "At the beach or near water", colors: ["teal", "coral", "sand"] },
+    ]
+  },
+  {
+    question: "How would you describe your wardrobe?",
+    options: [
+      { label: "Earthy and natural tones", colors: ["olive", "terracotta", "sand"] },
+      { label: "Bold and expressive", colors: ["cobalt", "amber", "burgundy"] },
+      { label: "Classic and minimal", colors: ["charcoal", "navy", "slate"] },
+      { label: "Bright and playful", colors: ["coral", "teal", "amber"] },
+    ]
+  },
+  {
+    question: "Pick a room you'd love to spend time in:",
+    options: [
+      { label: "A sun-drenched studio with warm wood tones", colors: ["amber", "terracotta", "sand"] },
+      { label: "A moody library with deep walls", colors: ["navy", "burgundy", "charcoal"] },
+      { label: "A crisp, open space with cool accents", colors: ["slate", "cobalt", "teal"] },
+      { label: "A lush greenhouse full of texture", colors: ["forest", "olive", "teal"] },
+    ]
+  },
+  {
+    question: "What energy do you want your favorite color to carry?",
+    options: [
+      { label: "Grounded and steady", colors: ["olive", "forest", "terracotta"] },
+      { label: "Bold and confident", colors: ["cobalt", "burgundy", "charcoal"] },
+      { label: "Calm and cool", colors: ["teal", "slate", "navy"] },
+      { label: "Warm and inviting", colors: ["amber", "coral", "sand"] },
+    ]
+  },
+  {
+    question: "Which season speaks to you most?",
+    options: [
+      { label: "Spring — fresh and alive", colors: ["teal", "coral", "olive"] },
+      { label: "Summer — bright and open", colors: ["cobalt", "sand", "amber"] },
+      { label: "Autumn — rich and textured", colors: ["terracotta", "burgundy", "forest"] },
+      { label: "Winter — stark and quiet", colors: ["slate", "navy", "charcoal"] },
+    ]
+  }
+];
+
+const colorData = {
+  forest: {
+    name: "Forest Green", hex: "#2D5016",
+    traits: [
+      { title: "You're deeply rooted", desc: "You don't chase trends — you grow into yourself slowly and with intention. People rely on you because you're steady when everything else shifts." },
+      { title: "You find meaning in nature and quiet", desc: "Overstimulation drains you. You recharge in open air, near trees, with your hands in something real. You notice things others walk past." },
+      { title: "You have a long game", desc: "Forest green isn't a flashy color — and neither are you. You're the person whose effort compounds over years into something remarkable." },
+      { title: "You're quietly protective", desc: "You don't announce your care, but people always feel it. You're the one who checks in, remembers, shows up without being asked." },
+    ]
+  },
+  olive: {
+    name: "Olive", hex: "#6B7C2E",
+    traits: [
+      { title: "You're effortlessly tasteful", desc: "Olive people rarely follow trends — they set a tone without trying. Your aesthetic sensibility is genuine, not curated for approval." },
+      { title: "You value craft over flash", desc: "You're drawn to things made well: good food, honest materials, people who mean what they say. You have little patience for hollow spectacle." },
+      { title: "You're quietly complex", desc: "Olive sits between yellow and green, warm and cool. You're similarly hard to pin down — intellectual but earthy, serious but dry-witted." },
+      { title: "You age well", desc: "Not just aesthetically. Your tastes deepen, your relationships grow richer, and your sense of self becomes more settled with every passing year." },
+    ]
+  },
+  terracotta: {
+    name: "Terracotta", hex: "#C1603B",
+    traits: [
+      { title: "You're warm in a way that feels ancient", desc: "Terracotta is clay fired by the sun — one of the oldest human materials. You carry that same timeless, grounding energy. People feel safe around you." },
+      { title: "You embrace imperfection", desc: "Handmade things, worn edges, the patina of a well-used object — these things appeal to you far more than pristine or perfect." },
+      { title: "You have strong aesthetic instincts", desc: "You know what a room, an outfit, or a meal needs. Your taste is warm and confident without being aggressive." },
+      { title: "You connect people", desc: "Like a hearth, you're where people gather. You're the one who hosts, who brings others together, who makes a space feel inhabited." },
+    ]
+  },
+  navy: {
+    name: "Navy", hex: "#1B2A4A",
+    traits: [
+      { title: "You have quiet authority", desc: "You don't need to be the loudest in the room. Your presence is felt, your words carry weight, and people tend to trust your judgment." },
+      { title: "You're disciplined and principled", desc: "Navy is the color of institutions, of tradition done right. You have a personal code you actually live by — not just espouse." },
+      { title: "You're loyal to a fault", desc: "Once someone earns your trust, they have it for life. You don't give up on people easily, even when you probably should." },
+      { title: "You prefer depth over novelty", desc: "A few things you love deeply rather than many things you like casually. Your friendships, hobbies, and tastes all reflect this." },
+    ]
+  },
+  burgundy: {
+    name: "Burgundy", hex: "#722F37",
+    traits: [
+      { title: "You have rich inner life", desc: "Burgundy people feel things fully. You're not surface-level — you're interested in the underneath, the complicated, the layered." },
+      { title: "You appreciate the finer things, genuinely", desc: "Not as status symbols — you just have refined taste. Good wine, old books, thoughtful conversation. You can tell the real thing from the imitation." },
+      { title: "You carry a quiet drama", desc: "You're not chaotic, but there's intensity to you. People remember meeting you. You leave an impression without meaning to." },
+      { title: "You're slow to open up, but worth the wait", desc: "Earning your trust is a long game — but the friendship on the other side is rare, deep, and lasting." },
+    ]
+  },
+  slate: {
+    name: "Slate", hex: "#5A6A7A",
+    traits: [
+      { title: "You're a clear thinker", desc: "Slate is the color of clarity — the sky before a storm clears, clean and cool. You cut through noise and find the signal others miss." },
+      { title: "You're adaptable without being a pushover", desc: "Slate goes with everything because it's confident enough not to compete. You work in any room, any context, without losing yourself." },
+      { title: "You value restraint", desc: "Excess makes you uncomfortable. You find elegance in what's left out — fewer words, less clutter, simpler choices that are exactly right." },
+      { title: "People find you deeply reliable", desc: "Not exciting in a flashy way, but the kind of reliable that actually matters. You're who people call when something real is on the line." },
+    ]
+  },
+  cobalt: {
+    name: "Cobalt Blue", hex: "#1F4FCC",
+    traits: [
+      { title: "You're boldly, unapologetically yourself", desc: "Cobalt doesn't hedge. Neither do you. You have opinions, you share them, and you don't apologize for taking up space." },
+      { title: "You're driven by vision", desc: "You think in futures. You see what things could be before they are. This makes you inspiring to some and impatient-seeming to others." },
+      { title: "You have intense focus", desc: "When something captures your interest, you go deep — all the way down. Half-measures bore you. You want full commitment or nothing." },
+      { title: "You're electrically good company", desc: "Conversations with you crackle. You ask questions that make people think, you laugh loudly, you make ordinary evenings memorable." },
+    ]
+  },
+  amber: {
+    name: "Amber", hex: "#D4860A",
+    traits: [
+      { title: "You radiate warmth without trying", desc: "People feel better after spending time with you. It's not a performance — it's just how you move through the world, generously." },
+      { title: "You appreciate things with depth and history", desc: "Amber is literally fossilized time. You're drawn to authenticity, craft, and stories. You'd rather own one meaningful thing than ten disposable ones." },
+      { title: "You find magic in transition moments", desc: "Golden hour, the last day of a trip, the quiet before an event. You're alive to the in-between in ways that others rush past." },
+      { title: "You're boldly optimistic — with substance", desc: "Not naively sunny. Your warmth is earned, not performed. You've seen hard things and still choose to lean toward the light." },
+    ]
+  },
+  charcoal: {
+    name: "Charcoal", hex: "#383838",
+    traits: [
+      { title: "You're a study in quiet confidence", desc: "Charcoal doesn't announce itself — it simply holds everything together. You're the person who makes things work without needing credit." },
+      { title: "You think before you speak", desc: "You'd rather say one precise thing than five approximate ones. People have learned that when you do say something, it's worth hearing." },
+      { title: "You have strong aesthetic principles", desc: "You find excess exhausting. The right tool, the right word, the right amount — you have a finely calibrated sense of enough." },
+      { title: "You're more interesting than you appear", desc: "Charcoal looks simple. It isn't. Neither are you. The people who know you well know that depth is an understatement." },
+    ]
+  },
+  teal: {
+    name: "Teal", hex: "#1A7A6E",
+    traits: [
+      { title: "You balance opposites with ease", desc: "Teal is blue and green at once — cool and alive. You hold seemingly contradictory things: serious but playful, independent but deeply caring." },
+      { title: "You're emotionally intelligent", desc: "You read rooms, sense shifts, and adjust without making it obvious. People feel understood around you, sometimes without knowing why." },
+      { title: "You're drawn to the new and the natural", desc: "You love discovery — new places, ideas, people — but you always come back to something grounding. You need roots and wings equally." },
+      { title: "You're calmly, steadily yourself", desc: "You don't perform. You don't hustle for approval. You simply are who you are, with a consistency that people find both rare and reassuring." },
+    ]
+  },
+  coral: {
+    name: "Coral", hex: "#E86A4A",
+    traits: [
+      { title: "You bring joy into rooms", desc: "Coral people have an energy that lifts things. You're the one who makes a dull Tuesday feel like something worth showing up for." },
+      { title: "You're warm AND sharp", desc: "Coral isn't just soft pink — it has heat. You're friendly and fun, but you're also witty, quick, and surprisingly direct when it matters." },
+      { title: "You're expressive and unguarded", desc: "You don't hide much. What you feel shows. People love this about you — your enthusiasm is real, your affection is felt." },
+      { title: "You make things beautiful instinctively", desc: "Spaces, meals, gatherings — you have a knack for adding the detail that makes something go from fine to memorable." },
+    ]
+  },
+  sand: {
+    name: "Sand", hex: "#C4A882",
+    traits: [
+      { title: "You create calm wherever you go", desc: "People exhale around you. You're not trying to manage anyone's energy — you just naturally bring things down to a livable temperature." },
+      { title: "You have impeccable, quiet taste", desc: "Sand people don't need to be loud. Your home, your choices, your life — they're beautiful in an understated way that takes real confidence." },
+      { title: "You're deeply comfortable in yourself", desc: "You're not chasing anything. You know what you like, what you need, who you are. That settledness is rarer and more attractive than flash." },
+      { title: "You're a long-term thinker", desc: "You're not interested in what's trending. You're building something slow and lasting — a life with good bones and real warmth." },
+    ]
+  },
+};
+
+let currentQ = 0;
+let scores = {};
+const screen = document.getElementById('screen');
+
+function showIntro() {
+  screen.innerHTML = '';
+  const div = document.createElement('div');
+  div.className = 'fade-in';
+  div.innerHTML = `
+    <div class="brand">What's your color</div>
+    <h1 class="intro-title">Find your <em>true</em> color — no green allowed.</h1>
+    <p class="intro-desc">Five questions. One color that actually fits. A personality breakdown that might know you better than you know yourself.</p>
+    <button class="start-btn" id="start-btn">Begin the quiz</button>
+  `;
+  screen.appendChild(div);
+  document.getElementById('start-btn').addEventListener('click', function() {
+    currentQ = 0;
+    scores = {};
+    renderQuestion();
+  });
+}
+
+function renderQuestion() {
+  var q = questions[currentQ];
+  var pct = Math.round((currentQ / questions.length) * 100);
+
+  screen.innerHTML = '';
+  var div = document.createElement('div');
+  div.className = 'fade-in';
+
+  var progressHTML = '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%"></div></div>';
+  var labelHTML = '<div class="step-label">Question ' + (currentQ + 1) + ' of ' + questions.length + '</div>';
+  var questionHTML = '<p class="question">' + q.question + '</p>';
+  var optionsHTML = '<div class="options" id="options"></div>';
+
+  div.innerHTML = progressHTML + labelHTML + questionHTML + optionsHTML;
+  screen.appendChild(div);
+
+  var optionsEl = document.getElementById('options');
+  q.options.forEach(function(opt) {
+    var btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.innerHTML = '<span>' + opt.label + '</span>';
+    btn.addEventListener('click', function() { tally(opt.colors); });
+    optionsEl.appendChild(btn);
+  });
+}
+
+function tally(colors) {
+  colors.forEach(function(c) { scores[c] = (scores[c] || 0) + 1; });
+  if (currentQ < questions.length - 1) {
+    currentQ++;
+    renderQuestion();
+  } else {
+    showResult();
+  }
+}
+
+function showResult() {
+  var top = Object.entries(scores).sort(function(a,b){ return b[1]-a[1]; });
+  var key = top[0][0];
+  var c = colorData[key];
+
+  screen.innerHTML = '';
+  var div = document.createElement('div');
+  div.className = 'result-screen fade-in';
+
+  var swatchHTML = '<div class="color-swatch" style="background:' + c.hex + '"></div>';
+  var eyebrowHTML = '<p class="result-eyebrow">Your color is</p>';
+  var nameHTML = '<h2 class="result-name">' + c.name + '</h2>';
+  var hexHTML = '<p class="result-hex">' + c.hex + '</p>';
+  var dividerHTML = '<div class="result-divider"></div>';
+
+  var traitsHTML = '<div class="result-traits">';
+  c.traits.forEach(function(t, i) {
+    traitsHTML += '<div class="trait" style="animation-delay:' + (i * 0.08) + 's">';
+    traitsHTML += '<div class="trait-title">' + t.title + '</div>';
+    traitsHTML += '<div class="trait-desc">' + t.desc + '</div>';
+    traitsHTML += '</div>';
+  });
+  traitsHTML += '</div>';
+
+  var actionsHTML = '<div class="result-actions" id="result-actions"></div>';
+
+  div.innerHTML = swatchHTML + eyebrowHTML + nameHTML + hexHTML + dividerHTML + traitsHTML + actionsHTML;
+  screen.appendChild(div);
+
+  var actions = document.getElementById('result-actions');
+
+  var retake = document.createElement('button');
+  retake.className = 'btn-outline';
+  retake.textContent = 'Retake quiz';
+  retake.addEventListener('click', function() { currentQ = 0; scores = {}; showIntro(); });
+  actions.appendChild(retake);
+
+  var share = document.createElement('button');
+  share.className = 'btn-filled';
+  share.textContent = 'Copy result';
+  share.addEventListener('click', function() {
+    var text = 'My true color is ' + c.name + ' (' + c.hex + '). Take the quiz to find yours!';
+    navigator.clipboard.writeText(text).then(function() {
+      share.textContent = 'Copied!';
+      setTimeout(function(){ share.textContent = 'Copy result'; }, 2000);
+    });
+  });
+  actions.appendChild(share);
+}
+
+showIntro();
+</script>
+</body>
+</html>
